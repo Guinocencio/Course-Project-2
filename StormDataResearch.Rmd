@@ -1,0 +1,31 @@
+---
+title Project-Course-2
+author Gustavo I. Camilo
+date 11102019
+output html_document
+---
+
+```{r}
+require(tidyverse)
+require(dplyr)
+require(pacman)
+
+```
+
+
+```{r}
+
+StormData - tbl_df(read.csv(file.choose(), header = T, sep = ,))
+
+```
+
+```{r}
+StormData.fatalities - StomrData %% select(EVTYPE, FATALITIES) %% group_by(EVTYPE) %% summarise(total.fatalities = sum(FATALITIES)) %% arrange(-total.fatalities)
+head(StormData.fatalities, n=10)
+```
+cannot open the connection
+```{r}
+StormData.injuries - StomrData %% select(EVTYPE, INJURIES) %% group_by(EVTYPE) %% summarise(total.injuries = sum(INJURIES)) %% arrange(-total.injuries)
+```
+
+
