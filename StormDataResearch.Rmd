@@ -9,23 +9,65 @@ output html_document
 require(tidyverse)
 require(dplyr)
 require(pacman)
+require(ggplot2)
+pacman::p_load(plyr, dplyr, tidyr)
+pacman::p_load(readr, haven, ggplot2, Hmisc)
+pacman::p_load(knitr,stargazer)
 
 ```
 
 
 ```{r}
 
-StormData - tbl_df(read.csv(file.choose(), header = T, sep = ,))
+StormData <- tbl_df(read.csv(file.choose(), header = T, sep = ,))
 
 ```
 
+## 1- Across the United States, which types of events (as indicated in the 'EVTYPE' variable) are most harmful with respect to population health?
+
+
+
 ```{r}
-StormData.fatalities - StomrData %% select(EVTYPE, FATALITIES) %% group_by(EVTYPE) %% summarise(total.fatalities = sum(FATALITIES)) %% arrange(-total.fatalities)
+StormData.fatalities <- StormData %>% select(EVTYPE, FATALITIES) %>% group_by(EVTYPE) %>% summarise(total.fatalities = sum(FATALITIES)) %>% arrange(-total.fatalities)
 head(StormData.fatalities, n=10)
 ```
-cannot open the connection
+
 ```{r}
-StormData.injuries - StomrData %% select(EVTYPE, INJURIES) %% group_by(EVTYPE) %% summarise(total.injuries = sum(INJURIES)) %% arrange(-total.injuries)
+StormData.injuries <- StormData %>% select(EVTYPE, INJURIES) %>% group_by(EVTYPE) %>% summarise(total.injuries = sum(INJURIES)) %>% arrange(-total.injuries)
+```
+## 2- Across the United States, which types of events have the greatest economic consequences?
+
+```{r}
+##Verificando quais limpezas precisamos fazer na coluna 'PROPDMGEXP' indentificado através do levels
+head(StormData$PROPDMGEXP)
+
+##Verificando quais limpezas precisamos fazer na coluna 'PROPDMGEXP' indentificado através do levels
+head(StormData$CROPDMGEXP)
+```
+```{r}
+##Limpando os dados das tabelas verificadas
+
+StormData <-  StormData %>% mutate_at(vars(PROPDMGEXP,CROPDMGEXP), 
+               funs(as.numeric(recode(.,'0'=1,'1'=10,'2'=10^2,'3'=10^3,'4'=10^4,'5'=10^5,
+                                             '6'=10^6,'7'=10^7,'8'=10^8, 'B'=10^9,
+                                             'h'=1^2,'H'=1^2, 'k'=10^3,'K'=10^3,'m'=10^6,'M'=10^6,
+                                             ' '=0,'-'=0,'?'=0,'+'=0))))                            
+
+
 ```
 
+
+```{r}
+var_economic<- c("PROPDMGEXP", "PROPDMG", "CROPDMG", "CROPDMGEXP")
+df_economic <- StormData %>%  
+                select(EVTYPE, var_economic)%>%
+                mutate(PROPDMG = PROPDMG * PROPDMGEXP,
+                       CROPDMG= CROPDMG * CROPDMGEXP) %>% 
+                group_by(EVTYPE) %>% 
+                summarise(count= n(),
+                PROPDMG = sum(PROPDMG, na.rm = T),
+                CROPDMG =sum(CROPDMG, na.rm = T)) %>% 
+                mutate(all_economic_damage = PROPDMG + CROPDMG) %>% 
+                arrange(desc(all_economic_damage))
+```
 
