@@ -58,16 +58,18 @@ StormData <-  StormData %>% mutate_at(vars(PROPDMGEXP,CROPDMGEXP),
 
 
 ```{r}
-var_economic<- c("PROPDMGEXP", "PROPDMG", "CROPDMG", "CROPDMGEXP")
-df_economic <- StormData %>%  
-                select(EVTYPE, var_economic)%>%
-                mutate(PROPDMG = PROPDMG * PROPDMGEXP,
-                       CROPDMG= CROPDMG * CROPDMGEXP) %>% 
-                group_by(EVTYPE) %>% 
-                summarise(count= n(),
-                PROPDMG = sum(PROPDMG, na.rm = T),
-                CROPDMG =sum(CROPDMG, na.rm = T)) %>% 
-                mutate(all_economic_damage = PROPDMG + CROPDMG) %>% 
-                arrange(desc(all_economic_damage))
+
+PROPDMG <- StormData$PROPDMG * StormData$PROPDMGEXP
+CROPDMG <- StormData$CROPDMG * StormData$CROPDMGEXP
+
+StormData$TotalPropCrop <- PROPDMG + CROPDMG
+
+EUA_economic <- aggregate(StormData$TotalPropCrop, by = list(StormData$EVTYPE), FUN = sum) 
+
+colnames(EUA_economic) <- c("EVTYPE", "TOTALDMG")
+
+EUA_economic <- StormData[order(EUA_economic$TOTALDMG, decreasing = TRUE),]
+
+head(EUA_economic , n = 10)
 ```
 
