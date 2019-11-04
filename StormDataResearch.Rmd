@@ -10,30 +10,73 @@ require(tidyverse)
 require(dplyr)
 require(pacman)
 require(ggplot2)
-pacman::p_load(plyr, dplyr, tidyr)
-pacman::p_load(readr, haven, ggplot2, Hmisc)
-pacman::p_load(knitr,stargazer)
-
 ```
 
-
+#Carregando e Lendo os dados
 ```{r}
+StormData <- tbl_df(read.csv(file.choose(), header = T, sep = ","))
+```
 
-StormData <- tbl_df(read.csv(file.choose(), header = T, sep = ,))
+#
+```{r}
+#
+StormData.fatalities <- subset(StormData, !StormData$FATALITIES == 0, select = c(EVTYPE, FATALITIES))
+
+#
+StormData.injuries <- subset(stormEvent,!stormEvent$INJURIES == 
+    0, select = c(EVTYPE, INJURIES))
+
+#
+EUA_economic <- subset(StormData, !StormData$PROPDMG == 0 & !StormData$CROPDMG == 
+    0, select = c(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP))
 
 ```
+
 
 ## 1- Across the United States, which types of events (as indicated in the 'EVTYPE' variable) are most harmful with respect to population health?
 
 
 
 ```{r}
-StormData.fatalities <- StormData %>% select(EVTYPE, FATALITIES) %>% group_by(EVTYPE) %>% summarise(total.fatalities = sum(FATALITIES)) %>% arrange(-total.fatalities)
-head(StormData.fatalities, n=10)
+
+StormData.fatalities <- aggregate(StormData.fatalities$FATALITIES, by = list(StormData.fatalities$EVTYPE), 
+    FUN = sum)
+colnames(StormData.fatalities) <- c("EVTYPES", "FATALITIES")
+ StormData.fatalities <- StormData.fatalities[order(StormData.fatalities$FATALITIES, decreasing = TRUE), ][1:10, ]
+ 
+ #
+ fatalities <- ggplot() + geom_bar(data = StormData.fatalities, aes(x = EVTYPES, 
+    y = FATALITIES, fill = interaction(FATALITIES, EVTYPES)), stat = "identity", 
+    show.legend = F) + theme(axis.text.x = element_text(angle = 30, hjust = 1)) + 
+    xlab("Harmful Events") + ylab("No. of fatailities") + ggtitle("Top 5 weather events causing fatalities") + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
 ```
 
+
 ```{r}
-StormData.injuries <- StormData %>% select(EVTYPE, INJURIES) %>% group_by(EVTYPE) %>% summarise(total.injuries = sum(INJURIES)) %>% arrange(-total.injuries)
+
+
+StormData.injuries <- aggregate(StormData.injuries$INJURIES, by = list(StormData.injuries$EVTYPE), FUN = sum)
+colnames(StormData.injuries) <- c("EVTYPES","INJURIES")  
+StormData.injuries <- StormData.injuries[order(INJURIES, decreasing = T,) ][1:10, ]
+
+#
+injuries <- ggplot() + geom_bar(data = StormData.injuries, aes(x = EVTYPES, y = INJURIES, 
+    fill = interaction(INJURIES, EVTYPES)), stat = "identity", show.legend = F) + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) + xlab("Harmful Events") + 
+    ylab("No. of Injuries") + ggtitle("Top 5 weather events causing Injuries") + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+
+```
+
+#
+```{r}
+
+# 
+grid.arrange(fatalities, injuries, ncol = 2)
+
 ```
 ## 2- Across the United States, which types of events have the greatest economic consequences?
 
@@ -59,17 +102,16 @@ StormData <-  StormData %>% mutate_at(vars(PROPDMGEXP,CROPDMGEXP),
 
 ```{r}
 
-PROPDMG <- StormData$PROPDMG * StormData$PROPDMGEXP
-CROPDMG <- StormData$CROPDMG * StormData$CROPDMGEXP
+PROPDMG <- EUA_economic$PROPDMG * EUA_economic$PROPDMGEXP
+CROPDMG <- EUA_economic$CROPDMG * EUA_economic$CROPDMGEXP
 
-StormData$TotalPropCrop <- PROPDMG + CROPDMG
+EUA_economic$TotalPropCrop <- PROPDMG + CROPDMG
 
-EUA_economic <- aggregate(StormData$TotalPropCrop, by = list(StormData$EVTYPE), FUN = sum) 
+EUA_economic <- aggregate(EUA_economic$TotalPropCrop, by = list(EUA_economic$EVTYPE), FUN = sum) 
 
-colnames(EUA_economic) <- c("EVTYPE", "TOTALDMG")
+colnames(EUA_economic) <- c("EVTYPE", "TotalPropCrop")
 
-EUA_economic <- StormData[order(EUA_economic$TOTALDMG, decreasing = TRUE),]
+EUA_economic <- EUA_economic[order(EUA_economic$TotalPropCrop, decreasing = T), ][1:10, ]
 
 head(EUA_economic , n = 10)
 ```
-
