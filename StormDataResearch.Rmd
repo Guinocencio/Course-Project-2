@@ -10,6 +10,7 @@ require(tidyverse)
 require(dplyr)
 require(pacman)
 require(ggplot2)
+require(gridExtra)
 ```
 
 #Carregando e Lendo os dados
