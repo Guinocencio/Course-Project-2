@@ -1,57 +1,60 @@
 ---
-title "Catastrophic Climate Events That Caused US Economic Disorder"
-author "Gustavo I. Camilo"
-date "10 november 2019"
-output html_document
+title: "Catastrophic Climate Events That Caused US Economic Disorder"
+author: "Gustavo I. Camilo"
+date: "10 November 2019"
+output: html_document
 ---
 
-```{r}
-require(tidyverse)
-require(dplyr)
-require(pacman)
-require(ggplot2)
-require(gridExtra)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Loading and Reading Data
+```{r}
+
+library(tidyverse)
+library(pacman)
+library(ggplot2)
+library(gridExtra)
+
+```
+
+##  Loading and Reading Data
 
 ```{r}
 StormData <- tbl_df(read.csv(file.choose(), header = T, sep = ","))
 ```
 
-##Data
+##  Data
 
 The data for this assignment come in the form of a comma-separated-value file compressed via the bzip2 algorithm to reduce its size. You can download the file from the course web site:
 
-[DataStorm](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2)
++ [DataStorm](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2)
 
 There is also some documentation of the database available. Here you will find how some of the variables are constructed/defined.
 
-National Weather Service [Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
-National Climatic Data Center Storm Events [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
++ National Weather Service [Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+
++ National Climatic Data Center Storm Events [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
 
 The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
 
+## Data Processing
 
-#Data Processing
 ```{r}
-#
+
 StormData.fatalities <- subset(StormData, !StormData$FATALITIES == 0, select = c(EVTYPE, FATALITIES))
 
-#
+
 StormData.injuries <- subset(StormData,!StormData$INJURIES == 
     0, select = c(EVTYPE, INJURIES))
 
-#
+
 EUA_economic <- subset(StormData, !StormData$PROPDMG == 0 & !StormData$CROPDMG == 
     0, select = c(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP))
 
 ```
 
-
-## 1- Across the United States, which types of events (as indicated in the 'EVTYPE' variable) are most harmful with respect to population health?
-
-
+# 1- Across the United States, which types of events (as indicated in the 'EVTYPE' variable) are most harmful with respect to population health?
 
 ```{r}
 
@@ -64,11 +67,10 @@ colnames(StormData.fatalities) <- c("EVTYPES", "FATALITIES")
  fatalities <- ggplot() + geom_bar(data = StormData.fatalities, aes(x = EVTYPES, 
     y = FATALITIES, fill = interaction(FATALITIES, EVTYPES)), stat = "identity", 
     show.legend = F) + theme(axis.text.x = element_text(angle = 30, hjust = 1)) + 
-    xlab("Harmful Events") + ylab("No. of fatailities") + ggtitle("Top 10 weather events causing fatalities") + 
-    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+    xlab("Catastrophic Events") + ylab("fatailities") + ggtitle("Top 10 Catastrophic Death Events") + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) + coord_flip()
 
 ```
-
 
 ```{r}
 
@@ -80,30 +82,23 @@ StormData.injuries <- StormData.injuries[order(StormData.injuries$INJURIES, decr
 #
 injuries <- ggplot() + geom_bar(data = StormData.injuries, aes(x = EVTYPES, y = INJURIES, 
     fill = interaction(INJURIES, EVTYPES)), stat = "identity", show.legend = F) + 
-    theme(axis.text.x = element_text(angle = 30, hjust = 1)) + xlab("Harmful Events") + 
-    ylab("No. of Injuries") + ggtitle("Top 10 weather events causing Injuries") + 
-    theme(axis.text.x = element_text(angle = 30, hjust = 1))
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) + xlab("Catastrophic Events") + 
+    ylab("Injuries") + ggtitle("Top 10 Catastrophic Injury Events") + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) + coord_flip()
 
 
 ```
+# Results
 
-#Results
-#Top 10 Top Causes of Death and Damage
-```{r}
+##  Top 10 Top Causes of Death and Damage
+```{r,echo=FALSE}
 
-# 
 grid.arrange(fatalities, injuries, ncol = 2)
 
 ```
+# 2 - Across the United States, which types of events have the greatest economic consequences?
 
-
-
-##2- Across the United States, which types of events have the #greatest economic consequences?
-
-
-
-##Data Processing
-
+##  Data Processing
 ```{r}
 ##Verificando quais limpezas precisamos fazer na coluna 'PROPDMGEXP' indentificado através do levels
 head(EUA_economic$PROPDMGEXP)
@@ -111,6 +106,7 @@ head(EUA_economic$PROPDMGEXP)
 ##Verificando quais limpezas precisamos fazer na coluna 'PROPDMGEXP' indentificado através do levels
 head(EUA_economic$CROPDMGEXP)
 ```
+
 ```{r}
 ##Limpando os dados das tabelas verificadas
 
@@ -118,14 +114,11 @@ EUA_economic <-  EUA_economic %>% mutate_at(vars(PROPDMGEXP,CROPDMGEXP),
                funs(as.numeric(recode(.,'0'=1,'1'=10,'2'=10^2,'3'=10^3,'4'=10^4,'5'=10^5,
                                              '6'=10^6,'7'=10^7,'8'=10^8, 'B'=10^9,
                                              'h'=1^2,'H'=1^2, 'k'=10^3,'K'=10^3,'m'=10^6,'M'=10^6,
-                                             ' '=0,'-'=0,'?'=0,'+'=0))))                            
-
-
+                                             ' '=0,'-'=0,'?'=0,'+'=0))))                           
 ```
 
 
 ```{r}
-
 PROPDMG <- EUA_economic$PROPDMG * EUA_economic$PROPDMGEXP
 CROPDMG <- EUA_economic$CROPDMG * EUA_economic$CROPDMGEXP
 
@@ -139,12 +132,20 @@ EUA_economic <- EUA_economic[order(EUA_economic$TotalPropCrop, decreasing = T), 
 
 head(EUA_economic , n = 10)
 ```
-##Results
-```{r}
-ggplot() + geom_bar(data = EUA_economic, aes(x = EVTYPE, y = TotalPropCrop, fill = interaction(TotalPropCrop, EVTYPE)), stat = "identity", show.legend = F) + theme(axis.title.x = element_text(angle = 30, hjust = 1)) + ggtitle("Total catastrophic injury and death in the US") + xlab("Event") + ylab("Total ") + coord_flip()
 
+
+
+##  Results
+
+```{r plotF}
+plotF <- ggplot() + geom_bar(data = EUA_economic, aes(x = EVTYPE, y = TotalPropCrop, fill = interaction(TotalPropCrop, EVTYPE)), stat = "identity", show.legend = F) + theme(axis.title.x = element_text(angle = 30, hjust = 1)) + ggtitle("Total catastrophic injury and death in the US") + xlab("Event") + ylab("Total ") + coord_flip()
+
+plotF
 ```
 
-#Final Results 
 
-##Based on the results obtained, and with graphs generated, some results that the tornado caused the most deaths and injuries, while the flood caused the economic collapse.
+
+#  Final Results
+
+###    Based on the results obtained, and with graphs generated, some results that the tornado caused the most deaths and injuries, while the flood caused the economic collapse.
+
